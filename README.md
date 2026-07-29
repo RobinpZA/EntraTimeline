@@ -5,6 +5,12 @@ sign-ins, directory changes, Conditional Access evaluations, risk detections and
 provisioning events on a single zoomable timeline — served as a local web portal
 from a PowerShell module.
 
+## Screenshots
+
+![Timeline view](docs/images/timeline-view.png)
+
+![Detail panel](docs/images/detail-panel.png)
+
 ## Features
 
 - **Unified timeline** — five event lanes (Sign-Ins, Directory Changes, Conditional
