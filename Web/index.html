@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entra Timeline Viewer</title>
+  <!-- vis-timeline 7.7.3 and bootstrap-icons 1.11.3, vendored locally (offline + supply-chain safety) -->
+  <script src="/vendor/vis-timeline/vis-timeline-graph2d.min.js"></script>
+  <link  href="/vendor/vis-timeline/vis-timeline-graph2d.min.css" rel="stylesheet">
+  <link  href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link  href="/css/styles.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-brand">
+      <i class="bi bi-clock-history"></i>
+      <span>Entra Timeline</span>
+    </div>
+
+    <div class="header-search">
+      <div class="search-wrap">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" id="search-input" class="search-input"
+               placeholder="Search user by name or UPN…  (press / )" autocomplete="off"
+               role="combobox" aria-expanded="false" aria-autocomplete="list"
+               aria-controls="search-results" aria-label="Search for a user">
+        <div id="search-results" class="search-dropdown hidden" role="listbox"
+             aria-label="User search results"></div>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <span class="tz-badge" title="All timestamps in this portal are shown in UTC">UTC</span>
+      <div id="tenant-pill" class="tenant-pill" title="Connected tenant">
+        <i class="bi bi-building"></i>
+        <span id="tenant-name">Not connected</span>
+      </div>
+      <button id="shortcuts-btn" class="btn btn-ghost" title="Keyboard shortcuts (?)"
+              aria-label="Show keyboard shortcuts">
+        <i class="bi bi-keyboard"></i>
+      </button>
+      <button id="clear-cache-btn" class="btn btn-ghost" title="Clear local cache"
+              aria-label="Clear local cache">
+        <i class="bi bi-trash3"></i>
+      </button>
+      <button id="shutdown-btn" class="btn btn-ghost btn-danger" title="Stop server"
+              aria-label="Stop the EntraTimeline server">
+        <i class="bi bi-power"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Print-only header: a printout has none of the surrounding chrome, so it has
+       to say for whom, over what window, and when it was produced. -->
+  <div id="print-header" class="print-header">
+    <h1>Entra ID Activity Timeline</h1>
+    <div id="print-meta" class="print-meta"></div>
+  </div>
+
+  <!-- ── Main content ────────────────────────────────────────────────────── -->
+  <main class="app-main">
+
+    <!-- Workspace column: profile + stats + timeline -->
+    <section id="workspace" class="workspace hidden">
+
+      <!-- Profile card -->
+      <div class="profile-card">
+        <div class="profile-identity">
+          <div id="profile-avatar" class="profile-avatar">?</div>
+          <div class="profile-text">
+            <div class="profile-name-row">
+              <span id="profile-name" class="profile-name">—</span>
+              <span id="profile-badges" class="profile-badges"></span>
+            </div>
+            <div id="profile-upn" class="profile-upn">—</div>
+            <div class="profile-id-row">
+              <span class="profile-id-label">User ID</span>
+              <span id="profile-id" class="profile-id mono">—</span>
+              <button id="copy-id-btn" class="btn-icon copy-btn" title="Copy User ID">
+                <i class="bi bi-clipboard"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-controls">
+          <label class="ctrl-label">
+            <i class="bi bi-calendar-range"></i> Time range
+            <!-- Entra keeps activity logs for 7 days (Free) or 30 days (P1/P2). Longer
+                 windows would return nothing beyond retention, so they are not offered. -->
+            <select id="days-select" class="ctrl-select" title="Limited by Entra log retention (max 30 days)">
+              <option value="1">Last 24 hours</option>
+              <option value="7">Last 7 days</option>
+              <option value="14">Last 14 days</option>
+              <option value="30" selected>Last 30 days (max retention)</option>
+            </select>
+          </label>
+          <button id="refresh-btn" class="btn btn-primary" title="Refresh data from Graph">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+          <button id="failures-toggle" class="btn btn-ghost" title="Show failure events only">
+            <i class="bi bi-funnel"></i> Failures
+          </button>
+          <button id="noninteractive-toggle" class="btn btn-ghost"
+                  title="Also load non-interactive sign-ins (token refreshes, background clients) — much higher volume">
+            <i class="bi bi-activity"></i> Non-interactive
+          </button>
+          <button id="export-html-btn" class="btn btn-ghost" title="Export HTML report (also saved to Output/AuditLogs)"
+                  aria-label="Export HTML report">
+            <i class="bi bi-filetype-html"></i>
+          </button>
+          <button id="export-csv-btn" class="btn btn-ghost" title="Export CSV (also saved to Output/AuditLogs)"
+                  aria-label="Export CSV">
+            <i class="bi bi-filetype-csv"></i>
+          </button>
+          <button id="export-json-btn" class="btn btn-ghost" title="Export JSON (also saved to Output/AuditLogs)"
+                  aria-label="Export JSON">
+            <i class="bi bi-filetype-json"></i>
+          </button>
+          <span id="data-source" class="data-source"></span>
+        </div>
+      </div>
+
+      <!-- Filter bar: free text + view switch -->
+      <div class="filter-bar">
+        <div class="filter-input-wrap">
+          <i class="bi bi-funnel filter-icon"></i>
+          <input type="text" id="event-filter" class="filter-input" autocomplete="off"
+                 placeholder="Filter events — app, IP, device, policy, activity…"
+                 aria-label="Filter loaded events by text">
+          <button id="filter-clear" class="btn-icon filter-clear hidden" aria-label="Clear filter">
+            <i class="bi bi-x-circle-fill"></i>
+          </button>
+        </div>
+
+        <div class="view-switch" role="group" aria-label="View mode">
+          <button id="view-timeline-btn" class="view-btn active" data-view="timeline" aria-pressed="true">
+            <i class="bi bi-bar-chart-steps"></i> Timeline
+          </button>
+          <button id="view-table-btn" class="view-btn" data-view="table" aria-pressed="false">
+            <i class="bi bi-list-ul"></i> Table
+          </button>
+        </div>
+
+        <button id="reset-filters" class="btn btn-ghost hidden" title="Clear all filters">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset filters
+        </button>
+
+        <div id="loading-bar" class="loading-inline hidden" role="status" aria-live="polite">
+          <span class="spinner-sm"></span>
+          <span id="loading-msg">Loading…</span>
+          <span id="loading-elapsed" class="loading-elapsed">0s</span>
+        </div>
+      </div>
+
+      <!-- Data-state messages (partial / truncated / nothing found) -->
+      <div id="data-banner" class="data-banner hidden" role="status" aria-live="polite"></div>
+
+      <!-- Stat cards (also act as category filters) -->
+      <div id="stat-cards" class="stat-cards">
+        <button class="stat-card active" data-cat="SignIn">
+          <span class="stat-icon"><i class="bi bi-box-arrow-in-right"></i></span>
+          <span class="stat-meta">
+            <span class="stat-value" data-count>0</span>
+            <span class="stat-label">Sign-Ins</span>
+          </span>
+        </button>
+        <button class="stat-card active" data-cat="Audit">
+          <span class="stat-icon"><i class="bi bi-pencil-square"></i></span>
+          <span class="stat-meta">
+            <span class="stat-value" data-count>0</span>
+            <span class="stat-label">Directory Changes</span>
+          </span>
+        </button>
+        <button class="stat-card active" data-cat="CA">
+          <span class="stat-icon"><i class="bi bi-shield-check"></i></span>
+          <span class="stat-meta">
+            <span class="stat-value" data-count>0</span>
+            <span class="stat-label">Conditional Access</span>
+          </span>
+        </button>
+        <button class="stat-card active" data-cat="Risk">
+          <span class="stat-icon"><i class="bi bi-exclamation-triangle"></i></span>
+          <span class="stat-meta">
+            <span class="stat-value" data-count>0</span>
+            <span class="stat-label">Risk Events</span>
+          </span>
+        </button>
+        <button class="stat-card active" data-cat="Provisioning">
+          <span class="stat-icon"><i class="bi bi-arrow-repeat"></i></span>
+          <span class="stat-meta">
+            <span class="stat-value" data-count>0</span>
+            <span class="stat-label">Provisioning</span>
+          </span>
+        </button>
+      </div>
+
+      <!-- Timeline. The density strip sits above the lanes and is drawn by
+           timeline.js against the timeline's own centre panel, so the two stay
+           aligned at any zoom or panel width. -->
+      <div id="timeline-wrap" class="timeline-wrap">
+        <div id="density-strip" class="density-strip" role="img"
+             aria-label="Activity density over the visible time range">
+          <div class="density-label">
+            <span class="density-title"><i class="bi bi-bar-chart-fill"></i> Activity</span>
+            <span id="density-peak" class="density-peak">—</span>
+            <span class="density-legend"><span class="density-swatch"></span> off-hours</span>
+          </div>
+          <div id="density-plot" class="density-plot"></div>
+        </div>
+        <div id="timeline-container"></div>
+
+        <!-- Overview: the whole loaded range, with the current window as a
+             draggable brush. Clustering keeps a dense lane readable but costs
+             you any sense of where in the range you are. -->
+        <div id="minimap" class="minimap hidden">
+          <div class="minimap-label">Overview</div>
+          <div id="minimap-track" class="minimap-track" role="slider" tabindex="0"
+               aria-label="Timeline overview — drag to move the visible window"
+               aria-valuemin="0" aria-valuemax="100">
+            <div id="minimap-bars" class="minimap-bars"></div>
+            <div id="minimap-window" class="minimap-window"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table (same filtered set, sortable) -->
+      <div id="table-wrap" class="table-wrap hidden"></div>
+    </section>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="empty-state">
+      <i class="bi bi-person-bounding-box"></i>
+      <h2>Search for a user to begin</h2>
+      <p>Type a name or UPN in the search box above — or press <kbd>/</kbd> — to load
+         their Entra ID activity timeline.</p>
+      <div id="empty-actions" class="empty-actions"></div>
+    </div>
+
+    <!-- Detail panel -->
+    <aside id="detail-panel" class="detail-panel hidden">
+      <div id="detail-resize" class="detail-resize" role="separator" aria-orientation="vertical"
+           tabindex="0" aria-label="Resize detail panel (use left and right arrow keys)"></div>
+      <div class="detail-header">
+        <span id="detail-title" class="detail-title"></span>
+        <button id="detail-close" class="btn-icon" title="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="detail-tabs" id="detail-tabs">
+        <button class="detail-tab active" data-tab="details">Details</button>
+        <button class="detail-tab" data-tab="raw">Raw Data</button>
+        <button class="detail-tab" data-tab="related">Related <span id="related-count" class="tab-count hidden"></span></button>
+      </div>
+      <div id="detail-body" class="detail-body"></div>
+    </aside>
+  </main>
+
+  <!-- ── Keyboard shortcuts ──────────────────────────────────────────────── -->
+  <div id="shortcuts-modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+       aria-labelledby="shortcuts-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span id="shortcuts-title" class="modal-title"><i class="bi bi-keyboard"></i> Keyboard shortcuts</span>
+        <button id="shortcuts-close" class="btn-icon" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcut-row"><kbd>/</kbd><span>Focus user search</span></div>
+        <div class="shortcut-row"><kbd>e</kbd><span>Focus event filter</span></div>
+        <div class="shortcut-row"><kbd>←</kbd><kbd>→</kbd><span>Previous / next event</span></div>
+        <div class="shortcut-row"><kbd>f</kbd><span>Toggle failures only</span></div>
+        <div class="shortcut-row"><kbd>t</kbd><span>Switch timeline / table</span></div>
+        <div class="shortcut-row"><kbd>r</kbd><span>Refresh from Graph</span></div>
+        <div class="shortcut-row"><kbd>Esc</kbd><span>Close panel or dialog</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>This help</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast container ─────────────────────────────────────────────────── -->
+  <div id="toast-container" class="toast-container" role="region" aria-label="Notifications"></div>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/timeline.js"></script>
+  <script src="/js/table.js"></script>
+  <script src="/js/detail-panel.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

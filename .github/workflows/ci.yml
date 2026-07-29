@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Windows: the module targets PowerShell 7 on Windows and the HTTP listener,
+    # runspace and path behaviour are all platform-sensitive.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -MinimumVersion 1.21.0 -Scope CurrentUser -Force
+          Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force
+
+      - name: Analyze
+        shell: pwsh
+        run: ./build.ps1 -Task Analyze
+
+      - name: Test
+        shell: pwsh
+        run: ./build.ps1 -Task Test
+
+      - name: Frontend checks
+        shell: pwsh
+        run: ./build.ps1 -Task UITest
+
+      - name: Build
+        shell: pwsh
+        run: ./build.ps1 -Task Build
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pester-results
+          path: build/TestResults.xml
+          if-no-files-found: warn

@@ -1,0 +1,13 @@
+# Runtime data — contains real tenant activity (sign-ins, IPs, user GUIDs)
+Cache/
+Logs/
+Output/
+
+# Local config overrides
+*.local.json
+
+# Build artifacts
+build/
+
+# Plan files
+plan.md
