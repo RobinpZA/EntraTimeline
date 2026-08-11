@@ -1,29 +1,45 @@
 /* ── Design tokens ─────────────────────────────────────────────────────── */
 :root {
-  --bg-base:      #1e1e2e;
-  --bg-surface:   #181825;
-  --bg-card:      #313244;
-  --bg-hover:     #3b3d54;
-  --border:       #313244;
-  --border-soft:  #45475a;
-  --text-primary: #cdd6f4;
-  /* Catppuccin overlay1. The previous overlay0 (#6c7086) measured 3.56:1 against
-     --bg-surface — below the 4.5:1 WCAG AA minimum — and it carries stat labels,
-     detail row labels, the time axis and the empty state. This is 4.72:1. */
-  --text-muted:   #7f849c;
-  --text-sub:     #a6adc8;
-  --accent:       #89b4fa;
-  --success:      #a6e3a1;
-  --error:        #f38ba8;
-  --warning:      #f9e2af;
-  --info:         #89dceb;
+  /* Charcoal surfaces stepped around the #23262f base, lime accent. */
+  --bg-base:      #23262f;
+  --bg-surface:   #1b1e25;
+  --bg-card:      #2c303b;
+  --bg-hover:     #363b48;
+  --border:       #2f333e;
+  --border-soft:  #434959;
+  --text-primary: #e4e7ee;
+  /* Carries stat labels, detail row labels, the time axis and the empty state,
+     so it must clear the 4.5:1 WCAG AA minimum against --bg-surface. This is
+     5.06:1. */
+  --text-muted:   #868e9e;
+  --text-sub:     #a9b1c1;
+  --accent:       #b6ff2e;
+  /* Lime doubles as the success signal — the palette has one "good" colour and
+     spending a third green on it would only blur against the accent. Timeline
+     status is shape-encoded as well, so nothing rests on hue alone. */
+  --success:      #b6ff2e;
+  --error:        #ff6b81;
+  --warning:      #ffc857;
+  --info:         #4cc9f0;
 
-  /* category colors */
-  --cat-SignIn:       #a6e3a1;
-  --cat-Audit:        #89b4fa;
-  --cat-CA:           #b4befe;
-  --cat-Risk:         #f38ba8;
-  --cat-Provisioning: #fab387;
+  /* category colors — hues kept clear of the lime accent so a category never
+     reads as "selected" or "succeeded" */
+  --cat-SignIn:       #4cc9f0;
+  --cat-Audit:        #8b9dff;
+  --cat-CA:           #c792ea;
+  --cat-Risk:         #ff6b81;
+  --cat-Provisioning: #ffb454;
+
+  /* Channel triplets for the translucent fills, rings and washes below. */
+  --accent-rgb:  182,255,46;
+  --success-rgb: 182,255,46;
+  --error-rgb:   255,107,129;
+  --warning-rgb: 255,200,87;
+  --text-rgb:    228,231,238;
+  --muted-rgb:   134,142,158;
+  --card-rgb:    44,48,59;
+  --soft-rgb:    67,73,89;
+  --neutral-ring: #545b6d;
 
   --shadow:       0 2px 8px rgba(0,0,0,.4);
   --shadow-lg:    0 8px 24px rgba(0,0,0,.5);
@@ -53,8 +69,8 @@ html, body {
   /* Two faint wash gradients over the flat base give the surface depth without
      touching any foreground contrast — cards and text still sit on solid --bg-base. */
   background:
-    radial-gradient(120% 140% at 12% -12%, rgba(137,180,250,.05), transparent 60%),
-    radial-gradient(140% 120% at 105% 112%, rgba(180,190,254,.045), transparent 55%),
+    radial-gradient(120% 140% at 12% -12%, rgba(var(--accent-rgb),.05), transparent 60%),
+    radial-gradient(140% 120% at 105% 112%, rgba(76,201,240,.05), transparent 55%),
     var(--bg-base);
   color: var(--text-primary);
   overflow: hidden;
@@ -276,9 +292,9 @@ body { display: flex; flex-direction: column; }
   inset: 0;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(205,214,244,.05) 40%,
-    rgba(205,214,244,.13) 50%,
-    rgba(205,214,244,.05) 60%,
+    rgba(var(--text-rgb),.05) 40%,
+    rgba(var(--text-rgb),.13) 50%,
+    rgba(var(--text-rgb),.05) 60%,
     transparent 100%);
   animation: shimmerSweep 1.3s ease-in-out infinite;
   z-index: 5;
@@ -305,7 +321,7 @@ body { display: flex; flex-direction: column; }
   width: 52px; height: 52px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #b4befe);
+  background: linear-gradient(135deg, var(--accent), #4cc9f0);
   color: var(--bg-surface);
   display: flex;
   align-items: center;
@@ -473,7 +489,7 @@ body { display: flex; flex-direction: column; }
 .empty-chip:hover { background: var(--bg-card); color: var(--text-primary); border-color: var(--text-muted); }
 .empty-chip i { font-size: 14px; opacity: .8; }
 .empty-chip.chip-primary { border-color: var(--accent); color: var(--accent); }
-.empty-chip.chip-primary:hover { background: rgba(137,180,250,.12); color: var(--accent); }
+.empty-chip.chip-primary:hover { background: rgba(var(--accent-rgb),.12); color: var(--accent); }
 .chip-tag {
   font-size: 10px;
   text-transform: uppercase;
@@ -562,7 +578,7 @@ body { display: flex; flex-direction: column; }
   position: absolute;
   bottom: 0;
   padding: 0 1px;               /* the gap between bars … */
-  background-color: rgba(137,180,250,.5);
+  background-color: rgba(var(--accent-rgb),.5);
   background-clip: content-box; /* … which the fill must not paint into */
   border: none;
   border-radius: 1px 1px 0 0;
@@ -638,11 +654,11 @@ body { display: flex; flex-direction: column; }
 .minimap-window {
   position: absolute;
   top: -2px; bottom: -2px;
-  background: rgba(137,180,250,.16);
+  background: rgba(var(--accent-rgb),.16);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
   pointer-events: none;
-  box-shadow: 0 0 0 1px rgba(30,30,46,.6);
+  box-shadow: 0 0 0 1px rgba(35,38,47,.6);
 }
 
 /* vis-timeline dark theme overrides */
@@ -709,11 +725,11 @@ body { display: flex; flex-direction: column; }
 }
 
 .vis-group { border-color: var(--border) !important; background: transparent !important; }
-.vis-group:nth-child(odd) { background: rgba(49,50,68,.4) !important; }
+.vis-group:nth-child(odd) { background: rgba(var(--card-rgb),.4) !important; }
 
 .vis-time-axis { background: var(--bg-base) !important; border-color: var(--border) !important; }
 .vis-time-axis .vis-text { color: var(--text-muted) !important; font-size: 11px !important; }
-.vis-time-axis .vis-grid.vis-minor { border-color: rgba(49,50,68,.6) !important; }
+.vis-time-axis .vis-grid.vis-minor { border-color: rgba(var(--card-rgb),.6) !important; }
 .vis-time-axis .vis-grid.vis-major { border-color: var(--border) !important; }
 
 .vis-current-time { background-color: var(--accent) !important; opacity: .5; }
@@ -725,7 +741,7 @@ body { display: flex; flex-direction: column; }
   transition: filter 0.15s ease !important;
 }
 .vis-item:hover    { filter: brightness(1.25) !important; }
-.vis-item.vis-selected .vis-dot { box-shadow: 0 0 0 3px rgba(137,180,250,.5) !important; }
+.vis-item.vis-selected .vis-dot { box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.5) !important; }
 
 /* Point item: no box, just a clean dot + icon */
 .vis-item.vis-point { background: none !important; border: none !important; }
@@ -740,20 +756,20 @@ body { display: flex; flex-direction: column; }
 /* Dot colour AND shape per status. Red/green alone is the worst possible pairing
    for the most common colour vision deficiency, so status also carries a shape:
    hollow circle = success, filled circle = warning, filled square = failure. */
-.vis-item.event-success .vis-dot { border-color: #a6e3a1 !important; background: rgba(166,227,161,.3) !important; }
-.vis-item.event-warning .vis-dot { border-color: #f9e2af !important; background: #f9e2af !important; }
+.vis-item.event-success .vis-dot { border-color: var(--success) !important; background: rgba(var(--success-rgb),.3) !important; }
+.vis-item.event-warning .vis-dot { border-color: var(--warning) !important; background: var(--warning) !important; }
 .vis-item.event-failure .vis-dot {
-  border-color: #f38ba8 !important;
-  background: #f38ba8 !important;
+  border-color: var(--error) !important;
+  background: var(--error) !important;
   border-radius: 1px !important;
 }
-.vis-item.event-info    .vis-dot { border-color: #7f849c !important; background: rgba(127,132,156,.3) !important; }
+.vis-item.event-info    .vis-dot { border-color: var(--text-muted) !important; background: rgba(var(--muted-rgb),.3) !important; }
 
 /* Icon color per status */
-.vis-item.event-success .vis-item-content { color: #a6e3a1 !important; }
-.vis-item.event-failure .vis-item-content { color: #f38ba8 !important; }
-.vis-item.event-warning .vis-item-content { color: #f9e2af !important; }
-.vis-item.event-info    .vis-item-content { color: #6c7086 !important; }
+.vis-item.event-success .vis-item-content { color: var(--success) !important; }
+.vis-item.event-failure .vis-item-content { color: var(--error) !important; }
+.vis-item.event-warning .vis-item-content { color: var(--warning) !important; }
+.vis-item.event-info    .vis-item-content { color: var(--text-muted) !important; }
 
 /* Severity by size. Colour is spent on status, so how much an event should pull
    the eye rides on the one channel still free. vis measures the dot to centre
@@ -766,13 +782,13 @@ body { display: flex; flex-direction: column; }
   width: 16px !important;
   height: 16px !important;
   border-width: 3px !important;
-  box-shadow: 0 0 0 4px rgba(243,139,168,.16) !important;
+  box-shadow: 0 0 0 4px rgba(var(--error-rgb),.16) !important;
 }
 
 /* Selection has to outrank the severity glow, so it is stated after it and at
    equal specificity. */
 .vis-item.vis-point.vis-selected .vis-dot {
-  box-shadow: 0 0 0 3px rgba(137,180,250,.55) !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.55) !important;
 }
 
 /* Sign-in sessions: records sharing a correlationId, drawn as a bar under the
@@ -799,14 +815,14 @@ body { display: flex; flex-direction: column; }
 .vis-item.vis-background { pointer-events: none !important; }
 .vis-item.vis-background.shade-offhours {
   background-color: rgba(0,0,0,.32) !important;
-  border-left: 1px solid rgba(69,71,90,.55) !important;
-  border-right: 1px solid rgba(69,71,90,.55) !important;
+  border-left: 1px solid rgba(var(--soft-rgb),.55) !important;
+  border-right: 1px solid rgba(var(--soft-rgb),.55) !important;
 }
 
 /* Cluster items: count badge */
 .vis-item.vis-cluster {
   background: var(--bg-card) !important;
-  border: 2px solid #585b70 !important;
+  border: 2px solid var(--neutral-ring) !important;
   border-radius: 12px !important;
   color: var(--text-sub) !important;
   font-weight: 600 !important;
@@ -823,24 +839,24 @@ body { display: flex; flex-direction: column; }
    and positions it with an inline transform, so anything that changes the box's
    size after the fact knocks it off-centre. A shadow costs no layout. */
 .vis-item.vis-cluster.cluster-decorated {
-  --cluster-ring: rgba(88,91,112,.35);
+  --cluster-ring: rgba(var(--soft-rgb),.4);
   transition: box-shadow .15s ease, border-color .15s ease;
 }
 .vis-item.vis-cluster.cluster-failure {
-  --cluster-ring: rgba(243,139,168,.22);
+  --cluster-ring: rgba(var(--error-rgb),.22);
   border-color: var(--error) !important;
   color: var(--error) !important;
-  background: rgba(243,139,168,.12) !important;
+  background: rgba(var(--error-rgb),.12) !important;
 }
 .vis-item.vis-cluster.cluster-warning {
-  --cluster-ring: rgba(249,226,175,.2);
+  --cluster-ring: rgba(var(--warning-rgb),.2);
   border-color: var(--warning) !important;
   color: var(--warning) !important;
-  background: rgba(249,226,175,.1) !important;
+  background: rgba(var(--warning-rgb),.1) !important;
 }
 .vis-item.vis-cluster.cluster-success {
-  --cluster-ring: rgba(166,227,161,.18);
-  border-color: #585b70 !important;
+  --cluster-ring: rgba(var(--success-rgb),.18);
+  border-color: var(--neutral-ring) !important;
   color: var(--success) !important;
 }
 
@@ -975,10 +991,10 @@ body.resizing .vis-item { pointer-events: none; }
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-.badge-success { background: rgba(166,227,161,.15); color: var(--success); }
-.badge-failure { background: rgba(243,139,168,.15); color: var(--error); }
-.badge-warning { background: rgba(249,226,175,.15); color: var(--warning); }
-.badge-info    { background: rgba(108,112,134,.15); color: var(--text-sub); }
+.badge-success { background: rgba(var(--success-rgb),.15); color: var(--success); }
+.badge-failure { background: rgba(var(--error-rgb),.15);   color: var(--error); }
+.badge-warning { background: rgba(var(--warning-rgb),.15); color: var(--warning); }
+.badge-info    { background: rgba(var(--muted-rgb),.15);   color: var(--text-sub); }
 
 .ca-policy-list { display: flex; flex-direction: column; gap: 8px; }
 
@@ -1131,8 +1147,8 @@ body.resizing .vis-item { pointer-events: none; }
 .data-banner > i { margin-top: 2px; flex-shrink: 0; }
 .data-banner .banner-text { flex: 1; min-width: 0; }
 .data-banner .banner-close { margin-left: auto; flex-shrink: 0; }
-.banner-warning { background: rgba(249,226,175,.10); border-color: rgba(249,226,175,.35); color: var(--warning); }
-.banner-error   { background: rgba(243,139,168,.10); border-color: rgba(243,139,168,.35); color: var(--error); }
+.banner-warning { background: rgba(var(--warning-rgb),.10); border-color: rgba(var(--warning-rgb),.35); color: var(--warning); }
+.banner-error   { background: rgba(var(--error-rgb),.10);   border-color: rgba(var(--error-rgb),.35);   color: var(--error); }
 
 /* ── Filter bar ────────────────────────────────────────────────────────── */
 .filter-bar {
@@ -1250,7 +1266,7 @@ body.resizing .vis-item { pointer-events: none; }
   transition: background .12s ease;
 }
 .event-table tbody tr:hover { background: var(--bg-card); }
-.event-table tbody tr.row-selected { background: rgba(137,180,250,.12); }
+.event-table tbody tr.row-selected { background: rgba(var(--accent-rgb),.12); }
 .event-table td { padding: 9px 14px; vertical-align: top; }
 .event-table .nowrap { white-space: nowrap; }
 .event-table .cell-title { font-weight: 500; }
@@ -1274,7 +1290,7 @@ body.resizing .vis-item { pointer-events: none; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(17,17,27,.7);
+  background: rgba(15,17,21,.7);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -1496,14 +1512,14 @@ kbd {
 
 /* ── Failures-only toggle (active state) ───────────────────────────────── */
 #failures-toggle.active {
-  background: rgba(243, 139, 168, .15);
+  background: rgba(var(--error-rgb), .15);
   color: var(--error);
   border-color: var(--error);
 }
 
 /* ── Non-interactive toggle (active state) ─────────────────────────────── */
 #noninteractive-toggle.active {
-  background: rgba(137, 180, 250, .15);
+  background: rgba(var(--accent-rgb), .15);
   color: var(--accent);
   border-color: var(--accent);
 }
