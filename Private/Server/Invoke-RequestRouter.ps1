@@ -29,7 +29,7 @@ function Invoke-RequestRouter {
     try {
         if ($method -eq 'OPTIONS') {
             $Context.Response.StatusCode = 204
-            $Context.Response.Headers.Add('Allow', 'GET, POST, OPTIONS')
+            $Context.Response.Headers.Add('Allow', 'GET, HEAD, POST, OPTIONS')
             return
         }
 

@@ -11,8 +11,7 @@ function Write-JsonResponse {
     $Context.Response.ContentLength64 = $buffer.Length
     $Context.Response.Headers.Add('X-Content-Type-Options', 'nosniff')
     $Context.Response.Headers.Add('Cache-Control', 'no-store')
-    $Context.Response.OutputStream.Write($buffer, 0, $buffer.Length)
-    $Context.Response.OutputStream.Close()
+    Write-ResponseBody -Context $Context -Buffer $buffer
 }
 
 function Get-ContentSecurityPolicy {
@@ -251,8 +250,7 @@ function Write-StaticFile {
             $Context.Response.Headers.Add('Content-Security-Policy', (Get-ContentSecurityPolicy))
             $Context.Response.Headers.Add('Referrer-Policy', 'no-referrer')
         }
-        $Context.Response.OutputStream.Write($buffer, 0, $buffer.Length)
-        $Context.Response.OutputStream.Close()
+        Write-ResponseBody -Context $Context -Buffer $buffer
     } catch {
         Write-ErrorResponse -Context $Context -StatusCode 500 -Message 'Internal error'
     }
@@ -277,7 +275,33 @@ function Write-DownloadResponse {
     $Context.Response.Headers.Add('X-Content-Type-Options', 'nosniff')
     $Context.Response.Headers.Add('Cache-Control', 'no-store')
     $Context.Response.Headers.Add('Content-Disposition', "attachment; filename=`"$safeName`"")
-    $Context.Response.OutputStream.Write($buffer, 0, $buffer.Length)
+    Write-ResponseBody -Context $Context -Buffer $buffer
+}
+
+function Write-ResponseBody {
+    <#
+    .SYNOPSIS
+        Writes the response body and closes the stream — headers only for a HEAD request.
+    .DESCRIPTION
+        A HEAD response carries the same Content-Length as the GET would, but HttpListener
+        accepts no body bytes for it: writing them throws "Bytes to be written to the
+        stream exceed the Content-Length", which surfaced as a 500.
+    .PARAMETER Context
+        The request context.
+    .PARAMETER Buffer
+        The encoded body. ContentLength64 must already be set from it.
+    .EXAMPLE
+        Write-ResponseBody -Context $Context -Buffer $buffer
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][System.Net.HttpListenerContext]$Context,
+        [Parameter(Mandatory)][AllowEmptyCollection()][byte[]]$Buffer
+    )
+
+    if ($Context.Request.HttpMethod -ne 'HEAD') {
+        $Context.Response.OutputStream.Write($Buffer, 0, $Buffer.Length)
+    }
     $Context.Response.OutputStream.Close()
 }
 
