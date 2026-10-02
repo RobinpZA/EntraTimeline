@@ -50,6 +50,27 @@ Describe 'Get-TimelineDataRoot' {
     }
 }
 
+Describe 'Get-ContentSecurityPolicy' {
+    BeforeAll { $script:csp = Get-ContentSecurityPolicy }
+
+    It 'restricts scripts to the portal origin with no inline or eval' {
+        $script:csp | Should -Match "script-src 'self'(;|$)"
+    }
+
+    It 'blocks everything not explicitly allowed' {
+        $script:csp | Should -Match "default-src 'none'"
+    }
+
+    It 'keeps data on the machine' {
+        $script:csp | Should -Match "connect-src 'self'"
+        $script:csp | Should -Match "form-action 'none'"
+    }
+
+    It 'prevents framing' {
+        $script:csp | Should -Match "frame-ancestors 'none'"
+    }
+}
+
 Describe 'Get-QueryDays' {
     It 'returns the default when the query collection is null' {
         Get-QueryDays -Query $null | Should -Be 30

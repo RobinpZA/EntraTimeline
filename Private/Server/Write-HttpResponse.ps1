@@ -15,6 +15,40 @@ function Write-JsonResponse {
     $Context.Response.OutputStream.Close()
 }
 
+function Get-ContentSecurityPolicy {
+    <#
+    .SYNOPSIS
+        Returns the Content-Security-Policy sent with the portal page.
+    .DESCRIPTION
+        A backstop for the hand-escaped innerHTML rendering: if one esc() is ever missed,
+        injected script still cannot run, load from elsewhere or send data off the machine.
+
+        Scripts are 'self' only — the portal has no inline scripts, handlers or eval.
+        Styles allow 'unsafe-inline' because the portal and vis-timeline both write
+        style attributes (event colours, item positions); inline style cannot execute
+        code, so the script rules still hold. Google Fonts is the one external origin.
+    .OUTPUTS
+        String — the header value.
+    .EXAMPLE
+        $Context.Response.Headers.Add('Content-Security-Policy', (Get-ContentSecurityPolicy))
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    @(
+        "default-src 'none'"
+        "script-src 'self'"
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
+        "font-src 'self' https://fonts.gstatic.com"
+        "img-src 'self' data:"
+        "connect-src 'self'"
+        "base-uri 'none'"
+        "form-action 'none'"
+        "frame-ancestors 'none'"
+    ) -join '; '
+}
+
 function Resolve-WebAssetPath {
     <#
     .SYNOPSIS
@@ -213,6 +247,10 @@ function Write-StaticFile {
         $Context.Response.Headers.Add('X-Content-Type-Options', 'nosniff')
         $Context.Response.Headers.Add('ETag', $etag)
         $Context.Response.Headers.Add('Cache-Control', 'no-cache')
+        if ($ext -eq '.html') {
+            $Context.Response.Headers.Add('Content-Security-Policy', (Get-ContentSecurityPolicy))
+            $Context.Response.Headers.Add('Referrer-Policy', 'no-referrer')
+        }
         $Context.Response.OutputStream.Write($buffer, 0, $buffer.Length)
         $Context.Response.OutputStream.Close()
     } catch {
