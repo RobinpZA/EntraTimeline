@@ -14,7 +14,7 @@
     PrivateData       = @{
         PSData = @{
             Tags       = @('Entra', 'AzureAD', 'M365', 'Timeline', 'SignIn', 'ConditionalAccess')
-            ProjectUri = ''
+            ProjectUri = 'https://github.com/RobinpZA/EntraTimeline'
         }
     }
 }
