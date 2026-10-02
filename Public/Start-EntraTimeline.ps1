@@ -52,6 +52,7 @@ function Start-EntraTimeline {
     foreach ($dir in @($script:CacheRoot, $script:LogRoot)) {
         if (-not (Test-Path $dir)) { New-Item -Path $dir -ItemType Directory -Force | Out-Null }
     }
+    Write-Host "        Data: $($script:DataRoot)" -ForegroundColor DarkGray
     Clear-ExpiredCache
 
     # ── Start HTTP listener ───────────────────────────────────────────────────────

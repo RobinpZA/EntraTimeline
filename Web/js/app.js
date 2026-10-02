@@ -596,7 +596,7 @@
     document.body.appendChild(a);
     a.click();
     a.remove();
-    showToast(`Exporting ${format.toUpperCase()} — also saved to Output/AuditLogs.`, 'info');
+    showToast(`Exporting ${format.toUpperCase()} — also saved to ${status.outputPath ?? 'Output/AuditLogs'}.`, 'info');
   }
 
   /* ── User selected ────────────────────────────────────────────────────*/

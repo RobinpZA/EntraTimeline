@@ -78,7 +78,8 @@ switch ($Task) {
     'Clean' {
         $cleanDir = Join-Path $PSScriptRoot 'build'
         if (Test-Path $cleanDir) { Remove-Item $cleanDir -Recurse -Force }
-        $logsDir = Join-Path $PSScriptRoot 'Logs'
+        . (Join-Path $PSScriptRoot 'Private\Helpers\Get-TimelineDataRoot.ps1')
+        $logsDir = Join-Path (Get-TimelineDataRoot) 'Logs'
         if (Test-Path $logsDir) { Get-ChildItem $logsDir -Filter '*.log' | Remove-Item -Force }
         Write-Host '  ✓ Cleaned.' -ForegroundColor Green
     }

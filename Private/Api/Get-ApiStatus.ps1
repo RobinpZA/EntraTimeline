@@ -53,6 +53,7 @@ function Get-ApiStatus {
         scopes       = $scopes
         version      = $script:TimelineVersion
         cacheEntries = $cacheCount
+        outputPath   = $script:OutputRoot
         serverTime   = (Get-Date).ToUniversalTime().ToString('o')
     }
 }

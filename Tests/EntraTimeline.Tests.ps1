@@ -9,6 +9,7 @@ BeforeAll {
     $root = Split-Path $PSScriptRoot -Parent
     . (Join-Path $root 'Private\Helpers\ConvertTo-TimelineEvent.ps1')
     . (Join-Path $root 'Private\Helpers\Get-QueryDays.ps1')
+    . (Join-Path $root 'Private\Helpers\Get-TimelineDataRoot.ps1')
     . (Join-Path $root 'Private\Helpers\Export-TimelineReport.ps1')
     . (Join-Path $root 'Private\Helpers\Get-CacheToken.ps1')
     . (Join-Path $root 'Private\Helpers\Get-CachedData.ps1')
@@ -29,6 +30,23 @@ BeforeAll {
 AfterAll {
     if ($script:CacheRoot -and (Test-Path $script:CacheRoot)) {
         Remove-Item $script:CacheRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Describe 'Get-TimelineDataRoot' {
+    BeforeEach { $script:savedDataEnv = $env:ENTRATIMELINE_DATA }
+    AfterEach  { $env:ENTRATIMELINE_DATA = $script:savedDataEnv }
+
+    It 'defaults to LocalApplicationData, outside the module folder' {
+        $env:ENTRATIMELINE_DATA = $null
+        $expected = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'EntraTimeline'
+        Get-TimelineDataRoot | Should -Be $expected
+        Get-TimelineDataRoot | Should -Not -BeLike "$(Split-Path $PSScriptRoot -Parent)*"
+    }
+
+    It 'honours the ENTRATIMELINE_DATA override' {
+        $env:ENTRATIMELINE_DATA = 'D:\TimelineData'
+        Get-TimelineDataRoot | Should -Be 'D:\TimelineData'
     }
 }
 

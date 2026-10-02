@@ -4,9 +4,6 @@
 
 $script:TimelineRoot  = $PSScriptRoot
 $script:WebRoot       = Join-Path $PSScriptRoot 'Web'
-$script:CacheRoot     = Join-Path $PSScriptRoot 'Cache'
-$script:LogRoot       = Join-Path $PSScriptRoot 'Logs'
-$script:OutputRoot    = Join-Path $PSScriptRoot 'Output' 'AuditLogs'
 $script:Listener      = $null
 $script:CAPolicyCache = $null
 $script:CollectorPool = $null
@@ -23,16 +20,23 @@ try {
     $script:TimelineVersion = '0.0.0'
 }
 
-foreach ($dir in @($script:CacheRoot, $script:LogRoot)) {
-    if (-not (Test-Path $dir)) { New-Item -Path $dir -ItemType Directory -Force | Out-Null }
-}
-
 $Private = @(Get-ChildItem -Path "$PSScriptRoot\Private" -Recurse -Filter '*.ps1' -ErrorAction SilentlyContinue)
 $Public  = @(Get-ChildItem -Path "$PSScriptRoot\Public"  -Recurse -Filter '*.ps1' -ErrorAction SilentlyContinue)
 
 foreach ($file in @($Private + $Public)) {
     try   { . $file.FullName }
     catch { Write-Error "Failed to import $($file.FullName): $_" }
+}
+
+# Runtime data holds real tenant activity, so it lives outside the module folder
+# (see Get-TimelineDataRoot).
+$script:DataRoot      = Get-TimelineDataRoot
+$script:CacheRoot     = Join-Path $script:DataRoot 'Cache'
+$script:LogRoot       = Join-Path $script:DataRoot 'Logs'
+$script:OutputRoot    = Join-Path $script:DataRoot 'Output' 'AuditLogs'
+
+foreach ($dir in @($script:CacheRoot, $script:LogRoot)) {
+    if (-not (Test-Path $dir)) { New-Item -Path $dir -ItemType Directory -Force | Out-Null }
 }
 
 # Each module instance may hold a collector runspace pool — release it on unload.

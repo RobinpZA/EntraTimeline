@@ -41,7 +41,7 @@ from a PowerShell module.
   non-interactive toggle on refresh; back/forward navigation works between
   investigations.
 - **Export** — one-click CSV, JSON or styled HTML report, downloaded and also saved to
-  `Output/AuditLogs/` (swept to the newest 200 / last 30 days). Exports are never
+  `Output/AuditLogs/` under the data folder (swept to the newest 200 / last 30 days). Exports are never
   truncated, even when the on-screen timeline is.
 - **Print** — Ctrl+P prints the *currently filtered* view as a paginated table with a
   repeating header, inverted to black-on-white. Use the HTML export instead when you
@@ -118,8 +118,12 @@ EntraTimeline/
   Web/vendor/                    Vendored vis-timeline + Bootstrap Icons
   Tests/                         Pester unit tests, frontend checks, server harness
   .github/workflows/             CI (analyze → test → build)
-  Cache/ , Logs/ , Output/       Runtime data (gitignored — contains tenant data)
 ```
+
+Runtime data (`Cache/`, `Logs/`, `Output/AuditLogs/`) lives outside the module, in
+`%LOCALAPPDATA%\EntraTimeline\` by default — never in the repo, so a clone under
+OneDrive does not sync tenant activity to the cloud. Set `ENTRATIMELINE_DATA` to use a
+different folder; the path is printed at startup.
 
 ## Build & test
 
@@ -145,8 +149,9 @@ pull request.
 - State-changing endpoints (`/api/shutdown`, `/api/cache/clear`) require POST plus a
   custom header, so a page you happen to be browsing cannot trigger them.
 - Third-party assets are vendored locally — no CDN script execution surface.
-- `Cache/`, `Logs/` and `Output/` contain real tenant activity — they are gitignored
-  and should never be committed or shared.
+- `Cache/`, `Logs/` and `Output/` contain real tenant activity. They live in
+  `%LOCALAPPDATA%\EntraTimeline\` (not synced, not in the repo) and should never be
+  committed or shared. Point `ENTRATIMELINE_DATA` only at a local, non-synced folder.
 - The browser stores the last five users viewed per tenant in `localStorage` (names
   and UPNs only, no activity). **Clear cache** removes them.
 
